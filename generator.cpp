@@ -19,6 +19,8 @@ void explore(const Position &P, char* pos_str, const int depth) {
   if(!visited.insert(key).second)
     return; // already explored position
 
+  std::cout << "Generated new position: " << pos_str << std::endl;
+
   int nb_moves = P.nbMoves();
   if(nb_moves <= depth)
   std::cout << pos_str << std::endl;
@@ -41,7 +43,7 @@ void explore(const Position &P, char* pos_str, const int depth) {
  * Read input until EOF or an empty line is reached.
  */
 void generate_opening_book() {
-  static constexpr int BOOK_SIZE = 23; // store 2^BOOK_SIZE positions in the book
+  static constexpr int BOOK_SIZE = 1; // WAS 23 store 2^BOOK_SIZE positions in the book
   static constexpr int DEPTH = 14;     // max depth of every position to be stored
   static constexpr double LOG_3 = 1.58496250072; // log2(3)
   TranspositionTable<uint_t<int((DEPTH + Position::WIDTH -1) * LOG_3) + 1 - BOOK_SIZE>, Position::position_t, uint8_t, BOOK_SIZE> *table =
@@ -83,5 +85,8 @@ int main(int argc, char** argv) {
     int depth = atoi(argv[1]);
     char pos_str[depth + 1] = {0};
     explore(Position(), pos_str, depth);
-  } else generate_opening_book();
+  } else {
+    std::cout << "Generating Opening Book" << std::endl;
+    generate_opening_book();
+    }
 }

@@ -18,6 +18,7 @@
 
 #include "Solver.hpp"
 #include <iostream>
+#include <chrono>
 
 using namespace GameSolver::Connect4;
 
@@ -32,42 +33,75 @@ using namespace GameSolver::Connect4;
  *  Any invalid position (invalid sequence of move, or already won game)
  *  will generate an error message to standard error and an empty line to standard output.
  */
+#include "Solver.hpp"
+#include <iostream>
+#include <chrono> // Include chrono for timing
+
+using namespace GameSolver::Connect4;
+
+/**
+ * Main function.
+ * Reads Connect 4 positions, line by line, from standard input
+ * and writes one line per position to standard output containing:
+ *  - score of the position
+ *  - number of nodes explored
+ *  - time spent in microseconds to solve the position.
+ *
+ *  Any invalid position (invalid sequence of move, or already won game)
+ *  will generate an error message to standard error and an empty line to standard output.
+ */
 int main(int argc, char** argv) {
   Solver solver;
   bool weak = false;
-  bool analyze = false;
-
+  bool analyze = true; // Want to analize automatically
   std::string opening_book = "7x6.book";
-  for(int i = 1; i < argc; i++) {
-    if(argv[i][0] == '-') {
-      if(argv[i][1] == 'w') weak = true; // parameter -w: use weak solver
-      else if(argv[i][1] == 'b') { // paramater -b: define an alternative opening book
-        if(++i < argc) opening_book = std::string(argv[i]);
+  std::cout << "starting" << std::endl;
+
+  for (int i = 1; i < argc; i++) {
+    if (argv[i][0] == '-') {
+      if (argv[i][1] == 'w') weak = true; // parameter -w: use weak solver
+      else if (argv[i][1] == 'b') { // parameter -b: define an alternative opening book
+        if (++i < argc) opening_book = std::string(argv[i]);
       }
-      else if(argv[i][1] == 'a') { // paramater -a: make an analysis of all possible moves
+      else if (argv[i][1] == 'a') { // parameter -a: make an analysis of all possible moves
+        std::cout << "analyzing all moves" << std::endl;
         analyze = true;
       }
     }
   }
+
   solver.loadBook(opening_book);
 
   std::string line;
 
-  for(int l = 1; std::getline(std::cin, line); l++) {
+  for (int l = 1; std::getline(std::cin, line); l++) {
     Position P;
-    if(P.play(line) != line.size()) {
+    if (P.play(line) != line.size()) {
       std::cerr << "Line " << l << ": Invalid move " << (P.nbMoves() + 1) << " \"" << line << "\"" << std::endl;
     } else {
       std::cout << line;
-      if(analyze) {
+      if (analyze) {
+        auto start = std::chrono::high_resolution_clock::now(); // Start timing
+
         std::vector<int> scores = solver.analyze(P, weak);
-        for(int i = 0; i < Position::WIDTH; i++) std::cout << " " << scores[i];
-      }
-      else {
+
+        auto end = std::chrono::high_resolution_clock::now(); // End timing
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+        for (int i = 0; i < Position::WIDTH; i++) std::cout << " " << scores[i];
+        std::cout << " Time: " << duration << " microseconds";
+      } else {
+        auto start = std::chrono::high_resolution_clock::now(); // Start timing
+
         int score = solver.solve(P, weak);
-        std::cout << " " << score;
+
+        auto end = std::chrono::high_resolution_clock::now(); // End timing
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+        std::cout << " " << score << " Time: " << duration << " microseconds";
       }
       std::cout << std::endl;
+      std::cout << "input board position: ";
     }
   }
 }
